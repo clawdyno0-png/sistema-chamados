@@ -1,27 +1,51 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-<title>Login</title>
+<meta charset="UTF-8">
+<title>Login - Sistema de Chamados</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
 </head>
+
 <body>
 
-<h2>Login</h2>
+<div class="auth-wrapper">
+
+<div class="auth-card">
+
+<h1>Login</h1>
+
+<p>Acesse o sistema de gestão de chamados</p>
 
 <form method="POST">
 
-<input type="text" name="username" placeholder="Usuário" required>
-<br><br>
+<div class="form-group">
+<label>Usuário</label>
+<input class="form-control" type="text" name="username" required>
+</div>
 
-<input type="password" name="password" placeholder="Senha" required>
-<br><br>
+<div class="form-group">
+<label>Senha</label>
+<input class="form-control" type="password" name="password" required>
+</div>
 
-<button type="submit">Entrar</button>
+<button class="btn" type="submit">
+Entrar
+</button>
 
 </form>
 
-<br>
+<div class="auth-footer">
 
+Não tem conta?  
 <a href="/register">Criar conta</a>
+
+</div>
+
+</div>
+
+</div>
 
 </body>
 </html>
