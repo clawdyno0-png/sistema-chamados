@@ -97,6 +97,7 @@ def novo():
         titulo=titulo,
         descricao=descricao,
         prioridade=prioridade,
+        status="Novo",
         user_id=current_user.id
     )
 
