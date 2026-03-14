@@ -12,7 +12,7 @@
   <div class="auth-wrapper">
     <div class="auth-card">
       <h1>Criar conta</h1>
-      <p>Cadastre um novo usuário para acessar o sistema de gestão de chamados.</p>
+      <p>Cadastre um novo acesso para utilizar o sistema de gestão de chamados.</p>
 
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -49,6 +49,14 @@
             placeholder="Crie uma senha"
             required
           >
+        </div>
+
+        <div class="form-group">
+          <label for="tipo">Tipo de conta</label>
+          <select id="tipo" name="tipo" class="form-control" required>
+            <option value="usuario">Usuário</option>
+            <option value="analista">Analista</option>
+          </select>
         </div>
 
         <button class="btn" type="submit">
