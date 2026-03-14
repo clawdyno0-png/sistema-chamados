@@ -17,7 +17,7 @@ Acompanhe as informações, o status e as mensagens deste atendimento.
       </p>
     </div>
 
-    <div>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
       {% if chamado.status == "Aberto" %}
         <span class="badge badge-novo">Aberto</span>
       {% elif chamado.status == "Em atendimento" %}
@@ -26,6 +26,12 @@ Acompanhe as informações, o status e as mensagens deste atendimento.
         <span class="badge badge-aguardando">Aguardando usuário</span>
       {% else %}
         <span class="badge badge-resolvido">Finalizado</span>
+      {% endif %}
+
+      {% if current_user.tipo == "analista" and not chamado.analista %}
+        <form method="POST" action="{{ url_for('assumir_chamado', id=chamado.id) }}">
+          <button class="btn" type="submit">Assumir chamado</button>
+        </form>
       {% endif %}
     </div>
   </div>
