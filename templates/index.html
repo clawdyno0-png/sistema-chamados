@@ -1,230 +1,159 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Sistema de Chamados</title>
 
-<meta charset="UTF-8">
-
-<title>Sistema de Chamados</title>
-
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-<script src="{{ url_for('static', filename='script.js') }}" defer></script>
-
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='script.js') }}" defer></script>
 </head>
-
 <body>
 
-<div class="topbar">
-
-<div class="topbar-content">
-
-<h1>Sistema de Gestão de Chamados</h1>
-
-<a class="btn btn-secondary" href="/logout">
-Sair
-</a>
-
-</div>
-
-</div>
-
-
-<div class="container">
-
-
-<div class="card-grid">
-
-<div class="card">
-<h3>Chamados Novos</h3>
-<div class="number">{{ total_novo }}</div>
-</div>
-
-<div class="card">
-<h3>Em andamento</h3>
-<div class="number">{{ total_andamento }}</div>
-</div>
-
-<div class="card">
-<h3>Resolvidos</h3>
-<div class="number">{{ total_resolvido }}</div>
-</div>
-
-</div>
-
-
-
-<div class="section">
-
-<h2>Novo Chamado</h2>
-
-<form method="POST" action="/novo">
-
-<div class="form-group">
-<label>Título</label>
-<input class="form-control" name="titulo" required>
-</div>
-
-<div class="form-group">
-<label>Descrição</label>
-<textarea class="form-control" name="descricao"></textarea>
-</div>
-
-<div class="form-group">
-<label>Prioridade</label>
-
-<select class="form-control" name="prioridade">
-
-<option value="Baixa">Baixa</option>
-<option value="Média">Média</option>
-<option value="Alta">Alta</option>
-
-</select>
-
-</div>
-
-<button class="btn">
-Criar chamado
-</button>
-
-</form>
-
-</div>
-
-
-
-<div class="section">
-
-<h2>Filtros</h2>
-
-<div class="filter-row">
-
-<div class="form-group">
-
-<label>Status</label>
-
-<select id="filtro-status" class="form-control">
-
-<option value="">Todos</option>
-<option value="Novo">Novo</option>
-<option value="Em andamento">Em andamento</option>
-<option value="Resolvido">Resolvido</option>
-
-</select>
-
-</div>
-
-
-<div class="form-group">
-
-<label>Prioridade</label>
-
-<select id="filtro-prioridade" class="form-control">
-
-<option value="">Todas</option>
-<option value="Baixa">Baixa</option>
-<option value="Média">Média</option>
-<option value="Alta">Alta</option>
-
-</select>
-
-</div>
-
-</div>
-
-</div>
-
-
-
-<div class="section">
-
-<h2>Lista de Chamados</h2>
-
-{% if chamados %}
-
-<div class="table-wrapper">
-
-<table>
-
-<thead>
-
-<tr>
-<th>Título</th>
-<th>Descrição</th>
-<th>Prioridade</th>
-<th>Status</th>
-<th>Ação</th>
-</tr>
-
-</thead>
-
-<tbody>
-
-{% for chamado in chamados %}
-
-<tr class="linha-chamado"
-data-status="{{ chamado.status }}"
-data-prioridade="{{ chamado.prioridade }}">
-
-<td>{{ chamado.titulo }}</td>
-
-<td>{{ chamado.descricao }}</td>
-
-<td>{{ chamado.prioridade }}</td>
-
-<td>
-
-{% if chamado.status == "Novo" %}
-<span class="badge badge-novo">Novo</span>
-
-{% elif chamado.status == "Em andamento" %}
-<span class="badge badge-andamento">Em andamento</span>
-
-{% else %}
-<span class="badge badge-resolvido">Resolvido</span>
-
-{% endif %}
-
-</td>
-
-<td>
-
-{% if chamado.status != "Resolvido" %}
-
-<a class="btn btn-success" href="/resolver/{{ chamado.id }}">
-Resolver
-</a>
-
-{% else %}
-
-<span class="empty-text">
-Finalizado
-</span>
-
-{% endif %}
-
-</td>
-
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-</table>
-
-</div>
-
-{% else %}
-
-<p class="empty-text">
-Nenhum chamado cadastrado
-</p>
-
-{% endif %}
-
-</div>
-
-
-</div>
+  <div class="topbar">
+    <div class="topbar-content">
+      <div>
+        <h1>Sistema de Gestão de Chamados</h1>
+        <p style="color: rgba(255,255,255,0.88); margin-top: 6px; font-weight: 500;">
+          Painel principal de acompanhamento
+        </p>
+      </div>
+
+      <a class="btn btn-secondary" href="/logout">
+        Sair
+      </a>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <div class="card-grid">
+      <div class="card">
+        <h3>Chamados Novos</h3>
+        <div class="number">{{ total_novo }}</div>
+      </div>
+
+      <div class="card">
+        <h3>Em andamento</h3>
+        <div class="number">{{ total_andamento }}</div>
+      </div>
+
+      <div class="card">
+        <h3>Resolvidos</h3>
+        <div class="number">{{ total_resolvido }}</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Abertura de novo chamado</h2>
+
+      <form method="POST" action="/novo">
+        <div class="form-group">
+          <label for="titulo">Título</label>
+          <input id="titulo" class="form-control" name="titulo" placeholder="Digite o título do chamado" required>
+        </div>
+
+        <div class="form-group">
+          <label for="descricao">Descrição</label>
+          <textarea id="descricao" class="form-control" name="descricao" placeholder="Descreva o problema ou solicitação"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="prioridade">Prioridade</label>
+          <select id="prioridade" class="form-control" name="prioridade">
+            <option value="Baixa">Baixa</option>
+            <option value="Média">Média</option>
+            <option value="Alta">Alta</option>
+          </select>
+        </div>
+
+        <button class="btn" type="submit">
+          Criar chamado
+        </button>
+      </form>
+    </div>
+
+    <div class="section">
+      <h2>Filtros da listagem</h2>
+
+      <div class="filter-row">
+        <div class="form-group">
+          <label for="filtro-status">Status</label>
+          <select id="filtro-status" class="form-control">
+            <option value="">Todos</option>
+            <option value="Novo">Novo</option>
+            <option value="Em andamento">Em andamento</option>
+            <option value="Resolvido">Resolvido</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="filtro-prioridade">Prioridade</label>
+          <select id="filtro-prioridade" class="form-control">
+            <option value="">Todas</option>
+            <option value="Baixa">Baixa</option>
+            <option value="Média">Média</option>
+            <option value="Alta">Alta</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Lista de chamados</h2>
+
+      {% if chamados %}
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Título</th>
+                <th>Descrição</th>
+                <th>Prioridade</th>
+                <th>Status</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for chamado in chamados %}
+                <tr
+                  class="linha-chamado"
+                  data-status="{{ chamado.status }}"
+                  data-prioridade="{{ chamado.prioridade }}"
+                >
+                  <td>{{ chamado.titulo }}</td>
+                  <td>{{ chamado.descricao }}</td>
+                  <td>{{ chamado.prioridade }}</td>
+                  <td>
+                    {% if chamado.status == "Novo" %}
+                      <span class="badge badge-novo">Novo</span>
+                    {% elif chamado.status == "Em andamento" %}
+                      <span class="badge badge-andamento">Em andamento</span>
+                    {% else %}
+                      <span class="badge badge-resolvido">Resolvido</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if chamado.status != "Resolvido" %}
+                      <a class="btn btn-success" href="/resolver/{{ chamado.id }}">
+                        Resolver
+                      </a>
+                    {% else %}
+                      <span class="empty-text">Finalizado</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="empty-text">Nenhum chamado cadastrado até o momento.</p>
+      {% endif %}
+    </div>
+
+  </div>
 
 </body>
 </html>
