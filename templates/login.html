@@ -1,51 +1,55 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Login - Sistema de Chamados</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Sistema de Chamados</title>
 
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-
 <body>
 
-<div class="auth-wrapper">
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <h1>Entrar</h1>
+      <p>Acesse o sistema de gestão de chamados com seu usuário e senha.</p>
 
-<div class="auth-card">
+      <form method="POST">
+        <div class="form-group">
+          <label for="username">Usuário</label>
+          <input
+            id="username"
+            class="form-control"
+            type="text"
+            name="username"
+            placeholder="Digite seu usuário"
+            required
+          >
+        </div>
 
-<h1>Login</h1>
+        <div class="form-group">
+          <label for="password">Senha</label>
+          <input
+            id="password"
+            class="form-control"
+            type="password"
+            name="password"
+            placeholder="Digite sua senha"
+            required
+          >
+        </div>
 
-<p>Acesse o sistema de gestão de chamados</p>
+        <button class="btn" type="submit">
+          Entrar no sistema
+        </button>
+      </form>
 
-<form method="POST">
-
-<div class="form-group">
-<label>Usuário</label>
-<input class="form-control" type="text" name="username" required>
-</div>
-
-<div class="form-group">
-<label>Senha</label>
-<input class="form-control" type="password" name="password" required>
-</div>
-
-<button class="btn" type="submit">
-Entrar
-</button>
-
-</form>
-
-<div class="auth-footer">
-
-Não tem conta?  
-<a href="/register">Criar conta</a>
-
-</div>
-
-</div>
-
-</div>
+      <div class="auth-footer">
+        Não tem conta?
+        <a href="/register">Criar conta</a>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>
