@@ -10,13 +10,14 @@ from flask_login import (
     logout_user,
     current_user,
 )
-from werkzeug.security import generate_password_hash, check_password_hash
 
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "segredo"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+CHAVE_ANALISTA = "Sextafeira"
 
 db = SQLAlchemy(app)
 
@@ -26,8 +27,6 @@ login_manager.login_view = "login"
 login_manager.login_message = "Faça login para acessar o sistema."
 login_manager.login_message_category = "warning"
 
-ANALISTA_MASTER_KEY = "Sextafeira"
-
 
 # =========================
 # MODELOS
@@ -36,8 +35,8 @@ ANALISTA_MASTER_KEY = "Sextafeira"
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False)
-    tipo = db.Column(db.String(20), nullable=False, default="usuario")  # usuario | analista
+    password = db.Column(db.String(100), nullable=False)
+    tipo = db.Column(db.String(20), nullable=False, default="usuario")
 
     chamados_abertos = db.relationship(
         "Chamado",
@@ -59,20 +58,13 @@ class User(UserMixin, db.Model):
         lazy=True
     )
 
-    def set_password(self, raw_password):
-        self.password = generate_password_hash(raw_password)
-
-    def check_password(self, raw_password):
-        try:
-            return check_password_hash(self.password, raw_password)
-        except Exception:
-            return False
-
 
 class Chamado(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    protocolo = db.Column(db.String(30), unique=True, nullable=True)
     titulo = db.Column(db.String(200), nullable=False)
     descricao = db.Column(db.Text, nullable=False)
+    categoria = db.Column(db.String(50), nullable=False, default="Suporte")
     prioridade = db.Column(db.String(20), nullable=False)
     status = db.Column(db.String(30), nullable=False, default="Aberto")
 
@@ -128,6 +120,22 @@ def usuario_pode_ver_chamado(chamado):
     return chamado.user_id == current_user.id
 
 
+def gerar_protocolo():
+    ano = datetime.utcnow().year
+    ultimo_chamado = Chamado.query.order_by(Chamado.id.desc()).first()
+
+    if ultimo_chamado and ultimo_chamado.protocolo:
+        try:
+            ultimo_numero = int(ultimo_chamado.protocolo.split("-")[-1])
+        except (ValueError, IndexError):
+            ultimo_numero = ultimo_chamado.id
+    else:
+        ultimo_numero = 0
+
+    novo_numero = ultimo_numero + 1
+    return f"CH-{ano}-{novo_numero:03d}"
+
+
 # =========================
 # ROTAS DE AUTENTICAÇÃO
 # =========================
@@ -145,9 +153,9 @@ def login():
             flash("Preencha usuário e senha.", "danger")
             return redirect(url_for("login"))
 
-        user = User.query.filter_by(username=username).first()
+        user = User.query.filter_by(username=username, password=password).first()
 
-        if user and user.check_password(password):
+        if user:
             login_user(user)
             flash("Login realizado com sucesso.", "success")
             return redirect(url_for("dashboard_redirect"))
@@ -170,7 +178,7 @@ def register():
         chave_analista = request.form.get("chave_analista", "").strip()
 
         if not username or not password:
-            flash("Preencha todos os campos obrigatórios.", "danger")
+            flash("Preencha todos os campos.", "danger")
             return redirect(url_for("register"))
 
         if len(username) < 3:
@@ -184,8 +192,8 @@ def register():
         if tipo not in ["usuario", "analista"]:
             tipo = "usuario"
 
-        if tipo == "analista" and chave_analista != ANALISTA_MASTER_KEY:
-            flash("Chave de validação de analista inválida.", "danger")
+        if tipo == "analista" and chave_analista != CHAVE_ANALISTA:
+            flash("Chave de analista inválida.", "danger")
             return redirect(url_for("register"))
 
         existing_user = User.query.filter_by(username=username).first()
@@ -195,9 +203,9 @@ def register():
 
         novo_usuario = User(
             username=username,
+            password=password,
             tipo=tipo
         )
-        novo_usuario.set_password(password)
 
         db.session.add(novo_usuario)
         db.session.commit()
@@ -298,15 +306,18 @@ def novo_chamado():
     if request.method == "POST":
         titulo = request.form.get("titulo", "").strip()
         descricao = request.form.get("descricao", "").strip()
+        categoria = request.form.get("categoria", "").strip()
         prioridade = request.form.get("prioridade", "").strip()
 
-        if not titulo or not descricao or not prioridade:
+        if not titulo or not descricao or not categoria or not prioridade:
             flash("Preencha todos os campos do chamado.", "danger")
             return redirect(url_for("novo_chamado"))
 
         chamado = Chamado(
+            protocolo=gerar_protocolo(),
             titulo=titulo,
             descricao=descricao,
+            categoria=categoria,
             prioridade=prioridade,
             status="Aberto",
             user_id=current_user.id
@@ -401,9 +412,6 @@ def enviar_mensagem(id):
     if current_user.tipo == "usuario" and chamado.status == "Aguardando usuário":
         chamado.status = "Em atendimento"
 
-    if current_user.tipo == "analista" and chamado.analista_id is None:
-        chamado.analista_id = current_user.id
-
     db.session.commit()
 
     flash("Mensagem enviada com sucesso.", "success")
@@ -443,6 +451,17 @@ def alterar_status_chamado(id):
 
 with app.app_context():
     db.create_all()
+
+    # Garante protocolo nos chamados antigos que ainda não tenham
+    chamados_sem_protocolo = Chamado.query.filter(
+        (Chamado.protocolo.is_(None)) | (Chamado.protocolo == "")
+    ).order_by(Chamado.id.asc()).all()
+
+    for chamado in chamados_sem_protocolo:
+        ano = chamado.data_criacao.year if chamado.data_criacao else datetime.utcnow().year
+        chamado.protocolo = f"CH-{ano}-{chamado.id:03d}"
+
+    db.session.commit()
 
 
 if __name__ == "__main__":
