@@ -441,6 +441,10 @@ def enviar_mensagem(id):
         flash("Você não tem permissão para interagir com este chamado.", "danger")
         return redirect(url_for("dashboard_redirect"))
 
+    if chamado.status == "Finalizado":
+        flash("Este chamado já foi finalizado e não aceita novas mensagens.", "warning")
+        return redirect(url_for("detalhe_chamado", id=id))
+
     texto = request.form.get("mensagem", "").strip()
 
     if not texto:
