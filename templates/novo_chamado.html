@@ -1,40 +1,51 @@
 {% extends "base.html" %}
 
 {% block title %}Novo Chamado{% endblock %}
-{% block page_title %}Abrir Novo Chamado{% endblock %}
+
+{% block page_title %}Abrir novo chamado{% endblock %}
+{% block page_subtitle %}
+Preencha as informações abaixo para registrar uma nova solicitação.
+{% endblock %}
 
 {% block content %}
+<div class="content-section">
+  <h2>Dados do chamado</h2>
 
-  <div class="content-section">
-    <div style="margin-bottom: 20px;">
-      <h2 style="margin-bottom: 6px;">Registrar solicitação</h2>
-      <p class="page-subtitle" style="margin: 0;">
-        Preencha os dados abaixo para abrir um novo chamado no sistema.
-      </p>
+  <form method="POST">
+    <div class="form-group">
+      <label for="titulo">Título</label>
+      <input
+        id="titulo"
+        class="form-control"
+        type="text"
+        name="titulo"
+        placeholder="Ex.: Computador não liga"
+        required
+      >
     </div>
 
-    <form method="POST" action="{{ url_for('novo_chamado') }}">
-      <div class="form-group">
-        <label for="titulo">Título do chamado</label>
-        <input
-          id="titulo"
-          name="titulo"
-          class="form-control"
-          type="text"
-          placeholder="Ex.: Erro ao acessar o sistema"
-          required
-        >
-      </div>
+    <div class="form-group">
+      <label for="descricao">Descrição</label>
+      <textarea
+        id="descricao"
+        class="form-control"
+        name="descricao"
+        placeholder="Descreva o problema com o máximo de detalhes possível"
+        required
+      ></textarea>
+    </div>
 
+    <div class="filter-row">
       <div class="form-group">
-        <label for="descricao">Descrição</label>
-        <textarea
-          id="descricao"
-          name="descricao"
-          class="form-control"
-          placeholder="Descreva com detalhes o problema ou a solicitação"
-          required
-        ></textarea>
+        <label for="categoria">Categoria</label>
+        <select id="categoria" name="categoria" class="form-control" required>
+          <option value="">Selecione uma categoria</option>
+          <option value="TI">TI</option>
+          <option value="Financeiro">Financeiro</option>
+          <option value="RH">RH</option>
+          <option value="Suporte">Suporte</option>
+          <option value="Infraestrutura">Infraestrutura</option>
+        </select>
       </div>
 
       <div class="form-group">
@@ -46,17 +57,17 @@
           <option value="Alta">Alta</option>
         </select>
       </div>
+    </div>
 
-      <div class="actions-row">
-        <button type="submit" class="btn">
-          Abrir chamado
-        </button>
+    <div class="actions-row" style="margin-top: 8px;">
+      <button class="btn" type="submit">
+        Abrir chamado
+      </button>
 
-        <a href="{{ url_for('meus_chamados') }}" class="btn btn-secondary-header">
-          Voltar
-        </a>
-      </div>
-    </form>
-  </div>
-
+      <a class="btn btn-secondary-header" href="{{ url_for('meus_chamados') }}">
+        Cancelar
+      </a>
+    </div>
+  </form>
+</div>
 {% endblock %}
