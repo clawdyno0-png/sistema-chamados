@@ -15,7 +15,7 @@
       <div>
         <h1>Sistema de Gestão de Chamados</h1>
         <p style="color: rgba(255,255,255,0.88); margin-top: 6px; font-weight: 500;">
-          Painel principal de acompanhamento
+          Bem-vindo, {{ current_user.username }}. Acompanhe e gerencie seus chamados.
         </p>
       </div>
 
@@ -26,6 +26,18 @@
   </div>
 
   <div class="container">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="section" style="padding: 16px 18px;">
+          {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }}" style="margin-bottom: 10px;">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
 
     <div class="card-grid">
       <div class="card">
@@ -50,12 +62,23 @@
       <form method="POST" action="/novo">
         <div class="form-group">
           <label for="titulo">Título</label>
-          <input id="titulo" class="form-control" name="titulo" placeholder="Digite o título do chamado" required>
+          <input
+            id="titulo"
+            class="form-control"
+            name="titulo"
+            placeholder="Digite o título do chamado"
+            required
+          >
         </div>
 
         <div class="form-group">
           <label for="descricao">Descrição</label>
-          <textarea id="descricao" class="form-control" name="descricao" placeholder="Descreva o problema ou solicitação"></textarea>
+          <textarea
+            id="descricao"
+            class="form-control"
+            name="descricao"
+            placeholder="Descreva o problema ou solicitação"
+          ></textarea>
         </div>
 
         <div class="form-group">
@@ -111,7 +134,7 @@
                 <th>Descrição</th>
                 <th>Prioridade</th>
                 <th>Status</th>
-                <th>Ação</th>
+                <th>Ações</th>
               </tr>
             </thead>
 
@@ -123,8 +146,9 @@
                   data-prioridade="{{ chamado.prioridade }}"
                 >
                   <td>{{ chamado.titulo }}</td>
-                  <td>{{ chamado.descricao }}</td>
+                  <td>{{ chamado.descricao or '-' }}</td>
                   <td>{{ chamado.prioridade }}</td>
+
                   <td>
                     {% if chamado.status == "Novo" %}
                       <span class="badge badge-novo">Novo</span>
@@ -134,14 +158,26 @@
                       <span class="badge badge-resolvido">Resolvido</span>
                     {% endif %}
                   </td>
+
                   <td>
-                    {% if chamado.status != "Resolvido" %}
-                      <a class="btn btn-success" href="/resolver/{{ chamado.id }}">
-                        Resolver
-                      </a>
-                    {% else %}
-                      <span class="empty-text">Finalizado</span>
-                    {% endif %}
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                      {% if chamado.status == "Novo" %}
+                        <a class="btn" href="/andamento/{{ chamado.id }}">
+                          Iniciar atendimento
+                        </a>
+                        <a class="btn btn-success" href="/resolver/{{ chamado.id }}">
+                          Resolver
+                        </a>
+
+                      {% elif chamado.status == "Em andamento" %}
+                        <a class="btn btn-success" href="/resolver/{{ chamado.id }}">
+                          Resolver
+                        </a>
+
+                      {% else %}
+                        <span class="empty-text">Finalizado</span>
+                      {% endif %}
+                    </div>
                   </td>
                 </tr>
               {% endfor %}
