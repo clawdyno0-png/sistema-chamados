@@ -11,7 +11,6 @@
 <body class="app-body">
 
   <div class="app-layout">
-
     <aside class="sidebar">
       <div class="sidebar-brand">
         <div class="sidebar-logo">SG</div>
@@ -22,40 +21,40 @@
       </div>
 
       <nav class="sidebar-nav">
-        {% if current_user.tipo == "usuario" %}
-          <a href="{{ url_for('dashboard_usuario') }}" class="sidebar-link">
-            Dashboard
-          </a>
-          <a href="{{ url_for('novo_chamado') }}" class="sidebar-link">
-            Novo chamado
-          </a>
-          <a href="{{ url_for('meus_chamados') }}" class="sidebar-link">
-            Meus chamados
-          </a>
-        {% elif current_user.tipo == "analista" %}
-          <a href="{{ url_for('dashboard_analista') }}" class="sidebar-link">
-            Dashboard
-          </a>
-          <a href="{{ url_for('fila_chamados') }}" class="sidebar-link">
-            Fila de chamados
-          </a>
+        {% if current_user.is_authenticated %}
+          {% if current_user.tipo == "usuario" %}
+            <a href="{{ url_for('dashboard_usuario') }}" class="sidebar-link">Dashboard</a>
+            <a href="{{ url_for('novo_chamado') }}" class="sidebar-link">Novo chamado</a>
+            <a href="{{ url_for('meus_chamados') }}" class="sidebar-link">Meus chamados</a>
+          {% elif current_user.tipo == "analista" %}
+            <a href="{{ url_for('dashboard_analista') }}" class="sidebar-link">Dashboard</a>
+            <a href="{{ url_for('fila_chamados') }}" class="sidebar-link">Fila de chamados</a>
+          {% endif %}
         {% endif %}
       </nav>
     </aside>
 
     <main class="main-content">
-
       <header class="main-header">
         <div>
           <h1 class="page-title">{% block page_title %}Painel{% endblock %}</h1>
           <p class="page-subtitle">
-            {{ current_user.username }} • {{ current_user.tipo|capitalize }}
+            {% block page_subtitle %}
+              {% if current_user.is_authenticated %}
+                {{ current_user.username }} • {{ current_user.tipo|capitalize }}
+              {% endif %}
+            {% endblock %}
           </p>
         </div>
 
-        <a class="btn btn-secondary-header" href="{{ url_for('logout') }}">
-          Sair
-        </a>
+        <div class="actions-row">
+          {% block header_actions %}{% endblock %}
+          {% if current_user.is_authenticated %}
+            <a class="btn btn-secondary-header" href="{{ url_for('logout') }}">
+              Sair
+            </a>
+          {% endif %}
+        </div>
       </header>
 
       {% with messages = get_flashed_messages(with_categories=true) %}
@@ -71,9 +70,7 @@
       {% endwith %}
 
       {% block content %}{% endblock %}
-
     </main>
-
   </div>
 
 </body>
