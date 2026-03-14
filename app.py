@@ -8,7 +8,7 @@ from flask_login import (
     login_user,
     login_required,
     logout_user,
-    current_user
+    current_user,
 )
 
 
@@ -50,7 +50,11 @@ class User(UserMixin, db.Model):
         lazy=True
     )
 
-    mensagens = db.relationship("MensagemChamado", backref="autor", lazy=True)
+    mensagens = db.relationship(
+        "MensagemChamado",
+        backref="autor",
+        lazy=True
+    )
 
 
 class Chamado(db.Model):
@@ -63,25 +67,27 @@ class Chamado(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     analista_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
 
-    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+    data_criacao = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     data_atualizacao = db.Column(
         db.DateTime,
         default=datetime.utcnow,
-        onupdate=datetime.utcnow
+        onupdate=datetime.utcnow,
+        nullable=False
     )
 
     mensagens = db.relationship(
         "MensagemChamado",
         backref="chamado",
         lazy=True,
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        order_by="MensagemChamado.data_envio.asc()"
     )
 
 
 class MensagemChamado(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     mensagem = db.Column(db.Text, nullable=False)
-    data_envio = db.Column(db.DateTime, default=datetime.utcnow)
+    data_envio = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     chamado_id = db.Column(db.Integer, db.ForeignKey("chamado.id"), nullable=False)
     autor_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
@@ -154,6 +160,14 @@ def register():
             flash("Preencha todos os campos.", "danger")
             return redirect(url_for("register"))
 
+        if len(username) < 3:
+            flash("O usuário deve ter pelo menos 3 caracteres.", "warning")
+            return redirect(url_for("register"))
+
+        if len(password) < 4:
+            flash("A senha deve ter pelo menos 4 caracteres.", "warning")
+            return redirect(url_for("register"))
+
         if tipo not in ["usuario", "analista"]:
             tipo = "usuario"
 
@@ -162,13 +176,13 @@ def register():
             flash("Esse usuário já existe.", "warning")
             return redirect(url_for("register"))
 
-        new_user = User(
+        novo_usuario = User(
             username=username,
             password=password,
             tipo=tipo
         )
 
-        db.session.add(new_user)
+        db.session.add(novo_usuario)
         db.session.commit()
 
         flash("Conta criada com sucesso. Faça login para continuar.", "success")
@@ -203,7 +217,12 @@ def dashboard_usuario():
     if current_user.tipo != "usuario":
         return redirect(url_for("dashboard_analista"))
 
-    chamados = Chamado.query.filter_by(user_id=current_user.id).all()
+    chamados = (
+        Chamado.query
+        .filter_by(user_id=current_user.id)
+        .order_by(Chamado.data_criacao.desc())
+        .all()
+    )
 
     total_aberto = Chamado.query.filter_by(user_id=current_user.id, status="Aberto").count()
     total_atendimento = Chamado.query.filter_by(user_id=current_user.id, status="Em atendimento").count()
@@ -231,7 +250,12 @@ def dashboard_analista():
     total_aguardando = Chamado.query.filter_by(status="Aguardando usuário").count()
     total_finalizado = Chamado.query.filter_by(status="Finalizado").count()
 
-    chamados_recentes = Chamado.query.order_by(Chamado.data_criacao.desc()).limit(10).all()
+    chamados_recentes = (
+        Chamado.query
+        .order_by(Chamado.data_criacao.desc())
+        .limit(10)
+        .all()
+    )
 
     return render_template(
         "dashboard_analista.html",
