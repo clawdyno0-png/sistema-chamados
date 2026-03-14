@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Sistema de Chamados{% endblock %}</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+</head>
+<body class="app-body">
+
+  <div class="app-layout">
+
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-logo">SG</div>
+        <div>
+          <h2>Sistema</h2>
+          <p>Gestão de Chamados</p>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        {% if current_user.tipo == "usuario" %}
+          <a href="{{ url_for('dashboard_usuario') }}" class="sidebar-link">
+            Dashboard
+          </a>
+          <a href="{{ url_for('novo_chamado') }}" class="sidebar-link">
+            Novo chamado
+          </a>
+          <a href="{{ url_for('meus_chamados') }}" class="sidebar-link">
+            Meus chamados
+          </a>
+        {% elif current_user.tipo == "analista" %}
+          <a href="{{ url_for('dashboard_analista') }}" class="sidebar-link">
+            Dashboard
+          </a>
+          <a href="{{ url_for('fila_chamados') }}" class="sidebar-link">
+            Fila de chamados
+          </a>
+        {% endif %}
+      </nav>
+    </aside>
+
+    <main class="main-content">
+
+      <header class="main-header">
+        <div>
+          <h1 class="page-title">{% block page_title %}Painel{% endblock %}</h1>
+          <p class="page-subtitle">
+            {{ current_user.username }} • {{ current_user.tipo|capitalize }}
+          </p>
+        </div>
+
+        <a class="btn btn-secondary-header" href="{{ url_for('logout') }}">
+          Sair
+        </a>
+      </header>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-stack">
+            {% for category, message in messages %}
+              <div class="flash-message flash-{{ category }}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+
+    </main>
+
+  </div>
+
+</body>
+</html>
