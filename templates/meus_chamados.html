@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Meus Chamados{% endblock %}
+{% block page_title %}Meus Chamados{% endblock %}
+
+{% block content %}
+
+  <div class="content-section">
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 18px;">
+      <div>
+        <h2 style="margin-bottom: 6px;">Lista completa dos seus chamados</h2>
+        <p class="page-subtitle" style="margin: 0;">
+          Acompanhe o andamento de todas as suas solicitações.
+        </p>
+      </div>
+
+      <a href="{{ url_for('novo_chamado') }}" class="btn">
+        Novo chamado
+      </a>
+    </div>
+
+    {% if chamados %}
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Título</th>
+              <th>Prioridade</th>
+              <th>Status</th>
+              <th>Analista</th>
+              <th>Criado em</th>
+              <th>Ação</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for chamado in chamados %}
+              <tr>
+                <td>{{ chamado.titulo }}</td>
+                <td>{{ chamado.prioridade }}</td>
+                <td>
+                  {% if chamado.status == "Aberto" %}
+                    <span class="badge badge-novo">Aberto</span>
+                  {% elif chamado.status == "Em atendimento" %}
+                    <span class="badge badge-andamento">Em atendimento</span>
+                  {% elif chamado.status == "Aguardando usuário" %}
+                    <span class="badge" style="background: rgba(245, 158, 11, 0.14); color: #b45309;">
+                      Aguardando usuário
+                    </span>
+                  {% else %}
+                    <span class="badge badge-resolvido">Finalizado</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if chamado.analista %}
+                    {{ chamado.analista.username }}
+                  {% else %}
+                    <span class="empty-text">Não atribuído</span>
+                  {% endif %}
+                </td>
+                <td>{{ chamado.data_criacao.strftime('%d/%m/%Y %H:%M') }}</td>
+                <td>
+                  <a href="{{ url_for('detalhe_chamado', id=chamado.id) }}" class="btn btn-secondary-header">
+                    Ver detalhes
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="empty-text">
+        Você ainda não abriu nenhum chamado.
+      </p>
+    {% endif %}
+  </div>
+
+{% endblock %}
