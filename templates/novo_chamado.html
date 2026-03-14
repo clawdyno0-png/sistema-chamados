@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Chamado{% endblock %}
+{% block page_title %}Abrir Novo Chamado{% endblock %}
+
+{% block content %}
+
+  <div class="content-section">
+    <div style="margin-bottom: 20px;">
+      <h2 style="margin-bottom: 6px;">Registrar solicitação</h2>
+      <p class="page-subtitle" style="margin: 0;">
+        Preencha os dados abaixo para abrir um novo chamado no sistema.
+      </p>
+    </div>
+
+    <form method="POST" action="{{ url_for('novo_chamado') }}">
+      <div class="form-group">
+        <label for="titulo">Título do chamado</label>
+        <input
+          id="titulo"
+          name="titulo"
+          class="form-control"
+          type="text"
+          placeholder="Ex.: Erro ao acessar o sistema"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="descricao">Descrição</label>
+        <textarea
+          id="descricao"
+          name="descricao"
+          class="form-control"
+          placeholder="Descreva com detalhes o problema ou a solicitação"
+          required
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="prioridade">Prioridade</label>
+        <select id="prioridade" name="prioridade" class="form-control" required>
+          <option value="">Selecione a prioridade</option>
+          <option value="Baixa">Baixa</option>
+          <option value="Média">Média</option>
+          <option value="Alta">Alta</option>
+        </select>
+      </div>
+
+      <div class="actions-row">
+        <button type="submit" class="btn">
+          Abrir chamado
+        </button>
+
+        <a href="{{ url_for('meus_chamados') }}" class="btn btn-secondary-header">
+          Voltar
+        </a>
+      </div>
+    </form>
+  </div>
+
+{% endblock %}
