@@ -364,10 +364,21 @@ def fila_chamados():
     if current_user.tipo != "analista":
         return redirect(url_for("meus_chamados"))
 
-    chamados = (
-        Chamado.query
-        .order_by(Chamado.data_criacao.desc())
-        .all()
+    chamados = Chamado.query.all()
+
+    prioridade_peso = {
+        "Alta": 0,
+        "Média": 1,
+        "Baixa": 2
+    }
+
+    chamados = sorted(
+        chamados,
+        key=lambda chamado: (
+            0 if chamado.analista_id is None else 1,
+            prioridade_peso.get(chamado.prioridade, 99),
+            -(chamado.data_criacao.timestamp() if chamado.data_criacao else 0)
+        )
     )
 
     return render_template("fila_chamados.html", chamados=chamados)
