@@ -1,155 +1,166 @@
 {% extends "base.html" %}
 
-{% block title %}Detalhe do Chamado{% endblock %}
-{% block page_title %}Detalhe do Chamado #{{ chamado.id }}{% endblock %}
+{% block title %}Detalhes do Chamado{% endblock %}
+
+{% block page_title %}Detalhes do chamado{% endblock %}
+{% block page_subtitle %}
+Acompanhe as informações, o status e as mensagens deste atendimento.
+{% endblock %}
 
 {% block content %}
+<div class="content-section">
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 20px;">
+    <div>
+      <h2 style="margin-bottom: 8px;">{{ chamado.titulo }}</h2>
+      <p class="empty-text" style="margin: 0;">
+        Protocolo <strong>{{ chamado.protocolo or ('CH-' ~ chamado.id) }}</strong>
+      </p>
+    </div>
 
-  <div class="content-section">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; flex-wrap: wrap; margin-bottom: 20px;">
-      <div>
-        <h2 style="margin-bottom: 8px;">{{ chamado.titulo }}</h2>
-        <p class="page-subtitle" style="margin: 0;">
-          Acompanhe as informações do chamado e o histórico de atendimento.
-        </p>
-      </div>
+    <div>
+      {% if chamado.status == "Aberto" %}
+        <span class="badge badge-novo">Aberto</span>
+      {% elif chamado.status == "Em atendimento" %}
+        <span class="badge badge-andamento">Em atendimento</span>
+      {% elif chamado.status == "Aguardando usuário" %}
+        <span class="badge badge-aguardando">Aguardando usuário</span>
+      {% else %}
+        <span class="badge badge-resolvido">Finalizado</span>
+      {% endif %}
+    </div>
+  </div>
 
-      <div class="actions-row">
-        {% if current_user.tipo == "usuario" %}
-          <a href="{{ url_for('meus_chamados') }}" class="btn btn-secondary-header">
-            Voltar
-          </a>
+  <div class="dashboard-grid" style="margin-bottom: 20px;">
+    <div class="dashboard-card">
+      <h3>Categoria</h3>
+      <p class="number" style="font-size: 1.05rem;">{{ chamado.categoria }}</p>
+    </div>
+
+    <div class="dashboard-card">
+      <h3>Prioridade</h3>
+      <p style="margin: 0;">
+        {% if chamado.prioridade == "Alta" %}
+          <span class="badge badge-prioridade-alta">Alta</span>
+        {% elif chamado.prioridade == "Média" %}
+          <span class="badge badge-prioridade-media">Média</span>
         {% else %}
-          <a href="{{ url_for('fila_chamados') }}" class="btn btn-secondary-header">
-            Voltar
-          </a>
+          <span class="badge badge-prioridade-baixa">Baixa</span>
         {% endif %}
-      </div>
+      </p>
     </div>
 
-    <div class="detail-grid">
-      <div class="detail-card">
-        <span class="detail-label">Título</span>
-        <p class="detail-value">{{ chamado.titulo }}</p>
-      </div>
-
-      <div class="detail-card">
-        <span class="detail-label">Prioridade</span>
-        <p class="detail-value">{{ chamado.prioridade }}</p>
-      </div>
-
-      <div class="detail-card">
-        <span class="detail-label">Solicitante</span>
-        <p class="detail-value">{{ chamado.solicitante.username }}</p>
-      </div>
-
-      <div class="detail-card">
-        <span class="detail-label">Analista responsável</span>
-        <p class="detail-value">
-          {% if chamado.analista %}
-            {{ chamado.analista.username }}
-          {% else %}
-            Não atribuído
-          {% endif %}
-        </p>
-      </div>
-
-      <div class="detail-card">
-        <span class="detail-label">Status</span>
-        <p class="detail-value">
-          {% if chamado.status == "Aberto" %}
-            <span class="badge badge-novo">Aberto</span>
-          {% elif chamado.status == "Em atendimento" %}
-            <span class="badge badge-andamento">Em atendimento</span>
-          {% elif chamado.status == "Aguardando usuário" %}
-            <span class="badge" style="background: rgba(245, 158, 11, 0.14); color: #b45309;">
-              Aguardando usuário
-            </span>
-          {% else %}
-            <span class="badge badge-resolvido">Finalizado</span>
-          {% endif %}
-        </p>
-      </div>
-
-      <div class="detail-card">
-        <span class="detail-label">Criado em</span>
-        <p class="detail-value">{{ chamado.data_criacao.strftime('%d/%m/%Y %H:%M') }}</p>
-      </div>
+    <div class="dashboard-card">
+      <h3>Solicitante</h3>
+      <p class="number" style="font-size: 1.05rem;">{{ chamado.solicitante.username }}</p>
     </div>
 
-    <div class="content-section" style="margin-top: 24px; margin-bottom: 0; padding: 20px;">
-      <h2 style="margin-bottom: 10px;">Descrição do chamado</h2>
-      <p class="detail-description">{{ chamado.descricao }}</p>
+    <div class="dashboard-card">
+      <h3>Analista responsável</h3>
+      <p class="number" style="font-size: 1.05rem;">
+        {{ chamado.analista.username if chamado.analista else 'Não atribuído' }}
+      </p>
+    </div>
+  </div>
+
+  <div class="content-section" style="padding: 20px; margin-bottom: 20px;">
+    <h2>Descrição da solicitação</h2>
+    <p style="line-height: 1.7; color: var(--text-primary); margin-bottom: 0;">
+      {{ chamado.descricao }}
+    </p>
+  </div>
+
+  <div class="content-section" style="padding: 20px; margin-bottom: 20px;">
+    <h2>Informações do atendimento</h2>
+
+    <div class="filter-row">
+      <div>
+        <p style="margin-bottom: 8px; color: var(--text-secondary); font-weight: 600;">Data de abertura</p>
+        <p style="margin: 0;">{{ chamado.data_criacao.strftime('%d/%m/%Y %H:%M') if chamado.data_criacao else '-' }}</p>
+      </div>
+
+      <div>
+        <p style="margin-bottom: 8px; color: var(--text-secondary); font-weight: 600;">Última atualização</p>
+        <p style="margin: 0;">{{ chamado.data_atualizacao.strftime('%d/%m/%Y %H:%M') if chamado.data_atualizacao else '-' }}</p>
+      </div>
     </div>
   </div>
 
   {% if current_user.tipo == "analista" %}
-    <div class="content-section">
-      <h2 style="margin-bottom: 18px;">Alterar status</h2>
+    <div class="content-section" style="padding: 20px; margin-bottom: 20px;">
+      <h2>Atualizar status</h2>
 
       <form method="POST" action="{{ url_for('alterar_status_chamado', id=chamado.id) }}">
-        <div class="form-group">
-          <label for="status">Novo status</label>
-          <select id="status" name="status" class="form-control" required>
-            <option value="Aberto" {% if chamado.status == "Aberto" %}selected{% endif %}>Aberto</option>
-            <option value="Em atendimento" {% if chamado.status == "Em atendimento" %}selected{% endif %}>Em atendimento</option>
-            <option value="Aguardando usuário" {% if chamado.status == "Aguardando usuário" %}selected{% endif %}>Aguardando usuário</option>
-            <option value="Finalizado" {% if chamado.status == "Finalizado" %}selected{% endif %}>Finalizado</option>
-          </select>
+        <div class="filter-row">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="status">Novo status</label>
+            <select id="status" name="status" class="form-control" required>
+              <option value="Aberto" {% if chamado.status == "Aberto" %}selected{% endif %}>Aberto</option>
+              <option value="Em atendimento" {% if chamado.status == "Em atendimento" %}selected{% endif %}>Em atendimento</option>
+              <option value="Aguardando usuário" {% if chamado.status == "Aguardando usuário" %}selected{% endif %}>Aguardando usuário</option>
+              <option value="Finalizado" {% if chamado.status == "Finalizado" %}selected{% endif %}>Finalizado</option>
+            </select>
+          </div>
         </div>
 
-        <div class="actions-row">
-          <button type="submit" class="btn">
-            Salvar status
-          </button>
+        <div class="actions-row" style="margin-top: 16px;">
+          <button class="btn" type="submit">Salvar status</button>
         </div>
       </form>
     </div>
   {% endif %}
 
-  <div class="content-section">
-    <h2 style="margin-bottom: 18px;">Histórico de mensagens</h2>
+  <div class="content-section" style="padding: 20px; margin-bottom: 20px;">
+    <h2>Mensagens do chamado</h2>
 
     {% if mensagens %}
-      <div class="messages-list">
-        {% for msg in mensagens %}
-          <div class="message-item {% if msg.autor_id == current_user.id %}message-own{% endif %}">
-            <div class="message-meta">
-              <strong>{{ msg.autor.username }}</strong>
-              <span>{{ msg.data_envio.strftime('%d/%m/%Y %H:%M') }}</span>
+      <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 22px;">
+        {% for mensagem in mensagens %}
+          <div style="background: #f8fbfd; border: 1px solid var(--border-color); border-radius: 16px; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px;">
+              <strong>
+                {{ mensagem.autor.username }}
+                {% if mensagem.autor.tipo == "analista" %}
+                  <span class="badge badge-andamento" style="margin-left: 8px; min-width: auto;">Analista</span>
+                {% else %}
+                  <span class="badge badge-prioridade-baixa" style="margin-left: 8px; min-width: auto;">Usuário</span>
+                {% endif %}
+              </strong>
+
+              <span class="empty-text">
+                {{ mensagem.data_envio.strftime('%d/%m/%Y %H:%M') if mensagem.data_envio else '-' }}
+              </span>
             </div>
-            <div class="message-text">
-              {{ msg.mensagem }}
-            </div>
+
+            <p style="margin: 0; line-height: 1.7; color: var(--text-primary);">
+              {{ mensagem.mensagem }}
+            </p>
           </div>
         {% endfor %}
       </div>
     {% else %}
-      <p class="empty-text">Ainda não há mensagens neste chamado.</p>
+      <p class="empty-text" style="margin-bottom: 22px;">Ainda não há mensagens neste chamado.</p>
+    {% endif %}
+
+    {% if chamado.status != "Finalizado" %}
+      <form method="POST" action="{{ url_for('enviar_mensagem', id=chamado.id) }}">
+        <div class="form-group">
+          <label for="mensagem">Nova mensagem</label>
+          <textarea
+            id="mensagem"
+            name="mensagem"
+            class="form-control"
+            placeholder="Digite uma atualização ou resposta sobre este chamado"
+            required
+          ></textarea>
+        </div>
+
+        <div class="actions-row">
+          <button class="btn" type="submit">Enviar mensagem</button>
+        </div>
+      </form>
+    {% else %}
+      <p class="empty-text">Este chamado já foi finalizado. Não é mais possível enviar mensagens.</p>
     {% endif %}
   </div>
-
-  <div class="content-section">
-    <h2 style="margin-bottom: 18px;">Enviar nova mensagem</h2>
-
-    <form method="POST" action="{{ url_for('enviar_mensagem', id=chamado.id) }}">
-      <div class="form-group">
-        <label for="mensagem">Mensagem</label>
-        <textarea
-          id="mensagem"
-          name="mensagem"
-          class="form-control"
-          placeholder="Digite aqui sua atualização ou dúvida sobre o chamado"
-          required
-        ></textarea>
-      </div>
-
-      <div class="actions-row">
-        <button type="submit" class="btn">
-          Enviar mensagem
-        </button>
-      </div>
-    </form>
-  </div>
-
+</div>
 {% endblock %}
