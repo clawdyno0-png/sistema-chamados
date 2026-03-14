@@ -10,6 +10,7 @@ from flask_login import (
     logout_user,
     current_user,
 )
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 app = Flask(__name__)
@@ -17,7 +18,7 @@ app.config["SECRET_KEY"] = "segredo"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-CHAVE_ANALISTA = "Sextafeira"
+ANALISTA_MASTER_KEY = "Sextafeira"
 
 db = SQLAlchemy(app)
 
@@ -35,7 +36,7 @@ login_manager.login_message_category = "warning"
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
     tipo = db.Column(db.String(20), nullable=False, default="usuario")
 
     chamados_abertos = db.relationship(
@@ -57,6 +58,15 @@ class User(UserMixin, db.Model):
         backref="autor",
         lazy=True
     )
+
+    def set_password(self, raw_password):
+        self.password = generate_password_hash(raw_password)
+
+    def check_password(self, raw_password):
+        try:
+            return check_password_hash(self.password, raw_password)
+        except Exception:
+            return False
 
 
 class Chamado(db.Model):
@@ -153,9 +163,9 @@ def login():
             flash("Preencha usuário e senha.", "danger")
             return redirect(url_for("login"))
 
-        user = User.query.filter_by(username=username, password=password).first()
+        user = User.query.filter_by(username=username).first()
 
-        if user:
+        if user and user.check_password(password):
             login_user(user)
             flash("Login realizado com sucesso.", "success")
             return redirect(url_for("dashboard_redirect"))
@@ -178,7 +188,7 @@ def register():
         chave_analista = request.form.get("chave_analista", "").strip()
 
         if not username or not password:
-            flash("Preencha todos os campos.", "danger")
+            flash("Preencha todos os campos obrigatórios.", "danger")
             return redirect(url_for("register"))
 
         if len(username) < 3:
@@ -192,8 +202,8 @@ def register():
         if tipo not in ["usuario", "analista"]:
             tipo = "usuario"
 
-        if tipo == "analista" and chave_analista != CHAVE_ANALISTA:
-            flash("Chave de analista inválida.", "danger")
+        if tipo == "analista" and chave_analista != ANALISTA_MASTER_KEY:
+            flash("Chave de validação de analista inválida.", "danger")
             return redirect(url_for("register"))
 
         existing_user = User.query.filter_by(username=username).first()
@@ -203,9 +213,9 @@ def register():
 
         novo_usuario = User(
             username=username,
-            password=password,
             tipo=tipo
         )
+        novo_usuario.set_password(password)
 
         db.session.add(novo_usuario)
         db.session.commit()
@@ -386,6 +396,31 @@ def detalhe_chamado(id):
     )
 
 
+@app.route("/chamados/<int:id>/assumir", methods=["POST"])
+@login_required
+def assumir_chamado(id):
+    if not usuario_eh_analista():
+        flash("Apenas analistas podem assumir chamados.", "danger")
+        return redirect(url_for("dashboard_redirect"))
+
+    chamado = Chamado.query.get_or_404(id)
+
+    if chamado.analista_id is None:
+        chamado.analista_id = current_user.id
+
+        if chamado.status == "Aberto":
+            chamado.status = "Em atendimento"
+
+        db.session.commit()
+        flash("Chamado assumido com sucesso.", "success")
+    elif chamado.analista_id == current_user.id:
+        flash("Você já é o responsável por este chamado.", "info")
+    else:
+        flash("Este chamado já está atribuído a outro analista.", "warning")
+
+    return redirect(url_for("detalhe_chamado", id=id))
+
+
 @app.route("/chamados/<int:id>/mensagem", methods=["POST"])
 @login_required
 def enviar_mensagem(id):
@@ -411,6 +446,11 @@ def enviar_mensagem(id):
 
     if current_user.tipo == "usuario" and chamado.status == "Aguardando usuário":
         chamado.status = "Em atendimento"
+
+    if current_user.tipo == "analista" and chamado.analista_id is None:
+        chamado.analista_id = current_user.id
+        if chamado.status == "Aberto":
+            chamado.status = "Em atendimento"
 
     db.session.commit()
 
@@ -452,7 +492,6 @@ def alterar_status_chamado(id):
 with app.app_context():
     db.create_all()
 
-    # Garante protocolo nos chamados antigos que ainda não tenham
     chamados_sem_protocolo = Chamado.query.filter(
         (Chamado.protocolo.is_(None)) | (Chamado.protocolo == "")
     ).order_by(Chamado.id.asc()).all()
