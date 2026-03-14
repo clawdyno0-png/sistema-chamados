@@ -1,93 +1,119 @@
 {% extends "base.html" %}
 
 {% block title %}Dashboard do Usuário{% endblock %}
-{% block page_title %}Dashboard do Usuário{% endblock %}
+
+{% block page_title %}Painel do usuário{% endblock %}
+{% block page_subtitle %}
+Acompanhe seus chamados, status de atendimento e últimas atualizações.
+{% endblock %}
 
 {% block content %}
-
-  <div class="dashboard-grid">
-    <div class="dashboard-card">
-      <h3>Chamados abertos</h3>
-      <div class="number">{{ total_aberto }}</div>
-    </div>
-
-    <div class="dashboard-card">
-      <h3>Em atendimento</h3>
-      <div class="number">{{ total_atendimento }}</div>
-    </div>
-
-    <div class="dashboard-card">
-      <h3>Aguardando usuário</h3>
-      <div class="number">{{ total_aguardando }}</div>
-    </div>
-
-    <div class="dashboard-card">
-      <h3>Finalizados</h3>
-      <div class="number">{{ total_finalizado }}</div>
-    </div>
+<div class="dashboard-grid">
+  <div class="dashboard-card">
+    <h3>Chamados abertos</h3>
+    <p class="number">{{ total_aberto }}</p>
   </div>
 
-  <div class="content-section">
-    <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 18px;">
-      <div>
-        <h2 style="margin-bottom: 6px;">Resumo dos seus chamados</h2>
-        <p class="page-subtitle" style="margin: 0;">
-          Acompanhe abaixo os chamados mais recentes cadastrados na sua conta.
-        </p>
-      </div>
+  <div class="dashboard-card">
+    <h3>Em atendimento</h3>
+    <p class="number">{{ total_atendimento }}</p>
+  </div>
 
-      <a href="{{ url_for('novo_chamado') }}" class="btn">
-        Abrir novo chamado
+  <div class="dashboard-card">
+    <h3>Aguardando usuário</h3>
+    <p class="number">{{ total_aguardando }}</p>
+  </div>
+
+  <div class="dashboard-card">
+    <h3>Finalizados</h3>
+    <p class="number">{{ total_finalizado }}</p>
+  </div>
+</div>
+
+<div class="content-section">
+  <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px;">
+    <div>
+      <h2 style="margin-bottom: 6px;">Resumo dos seus chamados</h2>
+      <p class="empty-text" style="margin: 0;">
+        Visualize os chamados mais recentes e acompanhe o andamento de cada solicitação.
+      </p>
+    </div>
+
+    <a class="btn" href="{{ url_for('novo_chamado') }}">
+      Abrir novo chamado
+    </a>
+  </div>
+
+  {% if chamados %}
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Protocolo</th>
+            <th>Título</th>
+            <th>Categoria</th>
+            <th>Prioridade</th>
+            <th>Status</th>
+            <th>Última atualização</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for chamado in chamados[:5] %}
+            <tr>
+              <td>
+                <strong>{{ chamado.protocolo or ('CH-' ~ chamado.id) }}</strong>
+              </td>
+              <td>{{ chamado.titulo }}</td>
+              <td>{{ chamado.categoria }}</td>
+              <td>
+                {% if chamado.prioridade == "Alta" %}
+                  <span class="badge badge-prioridade-alta">Alta</span>
+                {% elif chamado.prioridade == "Média" %}
+                  <span class="badge badge-prioridade-media">Média</span>
+                {% else %}
+                  <span class="badge badge-prioridade-baixa">Baixa</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if chamado.status == "Aberto" %}
+                  <span class="badge badge-novo">Aberto</span>
+                {% elif chamado.status == "Em atendimento" %}
+                  <span class="badge badge-andamento">Em atendimento</span>
+                {% elif chamado.status == "Aguardando usuário" %}
+                  <span class="badge badge-aguardando">Aguardando usuário</span>
+                {% else %}
+                  <span class="badge badge-resolvido">Finalizado</span>
+                {% endif %}
+              </td>
+              <td>
+                {{ chamado.data_atualizacao.strftime('%d/%m/%Y %H:%M') if chamado.data_atualizacao else '-' }}
+              </td>
+              <td>
+                <a class="btn btn-success" href="{{ url_for('detalhe_chamado', id=chamado.id) }}">
+                  Ver
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="actions-row" style="margin-top: 18px;">
+      <a class="btn btn-secondary-header" href="{{ url_for('meus_chamados') }}">
+        Ver todos os chamados
       </a>
     </div>
+  {% else %}
+    <p class="empty-text">Você ainda não possui chamados cadastrados.</p>
 
-    {% if chamados %}
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Título</th>
-              <th>Prioridade</th>
-              <th>Status</th>
-              <th>Criado em</th>
-              <th>Ação</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {% for chamado in chamados %}
-              <tr>
-                <td>{{ chamado.titulo }}</td>
-                <td>{{ chamado.prioridade }}</td>
-                <td>
-                  {% if chamado.status == "Aberto" %}
-                    <span class="badge badge-novo">Aberto</span>
-                  {% elif chamado.status == "Em atendimento" %}
-                    <span class="badge badge-andamento">Em atendimento</span>
-                  {% elif chamado.status == "Aguardando usuário" %}
-                    <span class="badge" style="background: rgba(245, 158, 11, 0.14); color: #b45309;">
-                      Aguardando usuário
-                    </span>
-                  {% else %}
-                    <span class="badge badge-resolvido">Finalizado</span>
-                  {% endif %}
-                </td>
-                <td>{{ chamado.data_criacao.strftime('%d/%m/%Y %H:%M') }}</td>
-                <td>
-                  <a href="{{ url_for('detalhe_chamado', id=chamado.id) }}" class="btn btn-secondary-header">
-                    Ver detalhes
-                  </a>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <p class="empty-text">
-        Você ainda não possui chamados cadastrados.
-      </p>
-    {% endif %}
-  </div>
-
+    <div class="actions-row" style="margin-top: 18px;">
+      <a class="btn" href="{{ url_for('novo_chamado') }}">
+        Criar primeiro chamado
+      </a>
+    </div>
+  {% endif %}
+</div>
 {% endblock %}
