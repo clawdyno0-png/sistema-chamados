@@ -10,6 +10,7 @@ from flask_login import (
     logout_user,
     current_user,
 )
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 app = Flask(__name__)
@@ -25,6 +26,8 @@ login_manager.login_view = "login"
 login_manager.login_message = "Faça login para acessar o sistema."
 login_manager.login_message_category = "warning"
 
+ANALISTA_MASTER_KEY = "Sextafeira"
+
 
 # =========================
 # MODELOS
@@ -33,7 +36,7 @@ login_manager.login_message_category = "warning"
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
     tipo = db.Column(db.String(20), nullable=False, default="usuario")  # usuario | analista
 
     chamados_abertos = db.relationship(
@@ -55,6 +58,15 @@ class User(UserMixin, db.Model):
         backref="autor",
         lazy=True
     )
+
+    def set_password(self, raw_password):
+        self.password = generate_password_hash(raw_password)
+
+    def check_password(self, raw_password):
+        try:
+            return check_password_hash(self.password, raw_password)
+        except Exception:
+            return False
 
 
 class Chamado(db.Model):
@@ -133,9 +145,9 @@ def login():
             flash("Preencha usuário e senha.", "danger")
             return redirect(url_for("login"))
 
-        user = User.query.filter_by(username=username, password=password).first()
+        user = User.query.filter_by(username=username).first()
 
-        if user:
+        if user and user.check_password(password):
             login_user(user)
             flash("Login realizado com sucesso.", "success")
             return redirect(url_for("dashboard_redirect"))
@@ -155,9 +167,10 @@ def register():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
         tipo = request.form.get("tipo", "usuario").strip().lower()
+        chave_analista = request.form.get("chave_analista", "").strip()
 
         if not username or not password:
-            flash("Preencha todos os campos.", "danger")
+            flash("Preencha todos os campos obrigatórios.", "danger")
             return redirect(url_for("register"))
 
         if len(username) < 3:
@@ -171,6 +184,10 @@ def register():
         if tipo not in ["usuario", "analista"]:
             tipo = "usuario"
 
+        if tipo == "analista" and chave_analista != ANALISTA_MASTER_KEY:
+            flash("Chave de validação de analista inválida.", "danger")
+            return redirect(url_for("register"))
+
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
             flash("Esse usuário já existe.", "warning")
@@ -178,9 +195,9 @@ def register():
 
         novo_usuario = User(
             username=username,
-            password=password,
             tipo=tipo
         )
+        novo_usuario.set_password(password)
 
         db.session.add(novo_usuario)
         db.session.commit()
@@ -383,6 +400,9 @@ def enviar_mensagem(id):
 
     if current_user.tipo == "usuario" and chamado.status == "Aguardando usuário":
         chamado.status = "Em atendimento"
+
+    if current_user.tipo == "analista" and chamado.analista_id is None:
+        chamado.analista_id = current_user.id
 
     db.session.commit()
 
